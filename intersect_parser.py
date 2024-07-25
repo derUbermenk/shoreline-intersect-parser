@@ -6,6 +6,7 @@ import os
 import pandas as pd
 import json
 import sys
+import argparse
 
 class IntersectParser():
     def __init__(self, path_to_transect, path_to_shoreline, save_path) -> None:
@@ -67,18 +68,52 @@ class IntersectParser():
 
 
 
-def assertfile_type_and_exists(file_path, expected_extension):
-    exists = os.path.isfile(file_path)
-    if exists:
+def assertfile_type_and_exists(file_path, expected_extension, assert_exist = True):
+    if assert_exist:
+        exists = os.path.isfile(file_path)
+        if not exists:
+            sys.exit((1, f"cant find file {file_path}"))
+
+    else:
         _, extension = os.path.splitext(file_path)
         is_correct_extension = extension == expected_extension
-
         if is_correct_extension:
             return True
         else:
             message = f"{file_path} has wrong extension. expected {expected_extension}"
             sys.exit((1, message))
-    else: 
-        sys.exit((1, f"cant find file {file_path}"))
 
+def assert_dir_exists(dir_path):
+    exists = os.path.isdir(dir_path)
+    if not exists:
+        sys.exit((1,f"cant find dir {dir_path}"))
+
+def initializeIntersectParser(_args) -> IntersectParser:
+    parser = argparse.ArgumentParser(
+        prog="Coastsat",
+        description="process shoreline data"
+    )    
+
+    parser.add_argument("path_to_transect", help="path to transect geojson")
+    parser.add_argument("path_to_shoreline", help="path to shoreline csv")
+    parser.add_argument("save_loc", help="path to save file in csv")
+
+    args = parser.parse_args(_args)
+
+    assertfile_type_and_exists(args.path_to_transect, ".geojson")
+    assertfile_type_and_exists(args.path_to_shoreline, ".csv")
+
+    assert_dir_exists(os.path.abspath(args.save_loc))
+    assertfile_type_and_exists(os.path.basename(args.save_loc), ".csv", assert_exist=False)
+
+    intersectParser = IntersectParser(
+        args.path_to_transect,
+        args.path_to_shoreline,
+        args.save_loc
+    )
+
+    return intersectParser
+    
 if __name__ == "__main__":
+    intersectParser = initializeIntersectParser(sys.argv[1:])
+    intersectParser.parse()
