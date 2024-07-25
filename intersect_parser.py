@@ -103,7 +103,7 @@ def initializeIntersectParser(_args) -> IntersectParser:
     assertfile_type_and_exists(args.path_to_transect, ".geojson")
     assertfile_type_and_exists(args.path_to_shoreline, ".csv")
 
-    assert_dir_exists(os.path.abspath(args.save_loc))
+    assert_dir_exists(os.path.dirname(args.save_loc))
     assertfile_type_and_exists(os.path.basename(args.save_loc), ".geojson", assert_exist=False)
 
     intersectParser = IntersectParser(
