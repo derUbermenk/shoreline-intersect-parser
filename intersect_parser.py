@@ -14,8 +14,11 @@ class IntersectParser():
         self.path_to_shoreline = path_to_shoreline
         self.save_path = save_path
 
+        transect_data = self.load_geojson_data()
+
+        self.crs = transect_data.crs
         self.shoreline_intersects = self.load_shoreline()
-        self.transects = self.load_transects()
+        self.transects = self.load_transects(transect_data)
         self.segments = []
 
 
@@ -25,11 +28,14 @@ class IntersectParser():
 
         return shoreline_intersects
 
-    def load_transects(self) -> dict:
+    def load_geojson_data(self) -> geojson.FeatureCollection:
         with open(self.path_to_transect, 'r') as f:
             gj: geojson.FeatureCollection = geojson.load(f)
+        
+        return gj
 
-        transects = { feat.properties['name']: shapely.LineString(feat.geometry.coordinates) for feat in gj.features}
+    def load_transects(self, transect_data) -> dict:
+        transects = { feat.properties['name']: shapely.LineString(feat.geometry.coordinates) for feat in transect_data.features}
         return transects
 
     def extract_segments(self):
@@ -60,7 +66,7 @@ class IntersectParser():
     def parse(self):
         self.extract_segments()
         segments = geojson.FeatureCollection(self.segments) 
-        segments.crs = self.transects.crs 
+        segments.crs = self.crs 
 
         with open(self.save_path, 'w') as f:
             output =json.dumps(segments, indent=2)
